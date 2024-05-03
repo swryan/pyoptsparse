@@ -1,0 +1,185 @@
+name: Test pyoptsparse with SNOPT
+on:
+  # Run the workflow manually from the Actions tab
+  # All jobs are excluded by default, desired jobs must be selected
+  workflow_dispatch:
+    inputs:
+      run_name:
+        type: string
+        description: 'Name of workflow run as it will appear under Actions tab (optional):'
+        required: false
+        default: ""
+      job_name:
+        description: 'Select a job from the matrix to run (default: all jobs)'
+        type: choice
+        options:
+          - ''
+          - 'Ubuntu Conda'
+          - 'Ubuntu GitHub'
+          - 'MacOS Conda'
+          - 'MacOS ARM GitHub'
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
+
+run-name:  ${{ inputs.run_name }}
+
+permissions: {}
+
+jobs:
+
+  tests:
+
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # test on Ubuntu
+          - NAME: Ubuntu Conda
+            OS: ubuntu-latest
+            PY: '3.12'
+            NUMPY: '1.26'
+            SCIPY: '1.13'
+            PYOPTSPARSE: 'conda-forge'
+
+          - NAME: Ubuntu GitHub
+            OS: ubuntu-latest
+            PY: '3.12'
+            NUMPY: '1.26'
+            SCIPY: '1.13'
+            PYOPTSPARSE: 'github'
+
+          # test on MacOS
+          - NAME: MacOS Conda
+            OS: macos-13
+            PY: '3.12'
+            NUMPY: '1.26'
+            SCIPY: '1.13'
+            PYOPTSPARSE: 'conda-forge'
+
+          # test on MacOS/ARM
+          - NAME: MacOS ARM GitHub
+            OS: macos-14
+            PY: '3.12'
+            NUMPY: '1.26'
+            SCIPY: '1.13'
+            PYOPTSPARSE: 'github'
+
+    runs-on: ${{ matrix.OS }}
+
+    name: ${{ matrix.NAME }}
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Exit if this job was not selected
+        if: github.event_name == 'workflow_dispatch' &&  inputs.job_name != '' &&  inputs.job_name != matrix.NAME
+        uses: actions/github-script@v7
+        with:
+          script: core.setFailed('The ${{ matrix.NAME }} job was not included in the run, exiting...');
+
+      - name: Create SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          sudo chmod 600 ~/.ssh/id_rsa
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: ${{ matrix.PY }}
+          conda-version: "*"
+          channels: conda-forge
+
+      - name: Install dependencies
+        run: |
+          conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
+          conda install cython swig compilers openmpi-mpicc cmake meson -q -y
+          pip install testflo parameterized
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      #
+      # To access the terminal through the web-interface:
+      #    1. Click on the web-browser link printed out in this action from the github
+      #       workflow terminal
+      #    2. Press cntrl + c in the new tab that opens up to reveal the terminal
+      #    3. To activate the conda environment run:
+      #        $ source $CONDA/etc/profile.d/conda.sh
+      #        $ conda activate test
+      - name: Setup tmate session
+        if: ${{ inputs.debug_enabled }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+
+      - name: Build SNOPT
+        run: |
+          if [[ "${{ secrets.SNOPT_LOCATION }}" ]]; then
+            scp -qr ${{ secrets.SNOPT_LOCATION }} .
+            echo "============================================================="
+            echo "Building SNOPT"
+            echo "============================================================="
+
+            echo "  > Secure copying SNOPT over SSH"
+            scp -qr ${{ secrets.SNOPT_LOCATION }} .
+
+            echo "  > Building SNOPT..."
+            cd SNOPT
+            ./configure
+            make snopt
+
+            echo "  > Building Python bindings for SNOPT..."
+            cd lib
+            cp /home/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/f2py/snopt.pyf .
+            python -m numpy.f2py -c -m snopt snopt.pyf
+            PYOPTSPARSE_IMPORT_SNOPT_FROM=`pwd`
+
+            echo "  > Pass PYOPTSPARSE_IMPORT_SNOPT_FROM to subsequent steps..."
+            echo "PYOPTSPARSE_IMPORT_SNOPT_FROM=$PYOPTSPARSE_IMPORT_SNOPT_FROM" >> $GITHUB_ENV
+
+            cd ../..
+          else
+            echo "============================================================="
+            echo "SNOPT source is not available."
+            echo "============================================================="
+          fi
+
+      - name: Install pyOptSparse
+        run: |
+          echo "============================================================="
+          echo "Install pyoptsparse (from {{ matrix.PYOPTSPARSE }})"
+          echo "============================================================="
+
+          echo "PYOPTSPARSE_IMPORT_SNOPT_FROM: $PYOPTSPARSE_IMPORT_SNOPT_FROM"
+          ls -ltr $PYOPTSPARSE_IMPORT_SNOPT_FROM
+
+          if [[ "${{ matrix.PYOPTSPARSE }}" == "conda-forge" ]]; then
+            conda install pyoptsparse
+          else
+            pip install .
+          fi
+
+      - name: Test pyOptSparse
+        run: |
+          echo "============================================================="
+          echo "Run pyoptsparse tests"
+          echo "============================================================="
+
+          echo "PYOPTSPARSE_IMPORT_SNOPT_FROM: $PYOPTSPARSE_IMPORT_SNOPT_FROM"
+          ls -ltr $PYOPTSPARSE_IMPORT_SNOPT_FROM
+
+          cd tests
+          testflo -v --show_skipped
