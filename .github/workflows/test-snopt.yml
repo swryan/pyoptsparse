@@ -151,6 +151,9 @@ jobs:
             fi
 
             python -m numpy.f2py -c -m snopt snopt.pyf
+
+            python -c "import snopt"
+
             PYOPTSPARSE_IMPORT_SNOPT_FROM=`pwd`
 
             echo "  > Pass PYOPTSPARSE_IMPORT_SNOPT_FROM to subsequent steps..."
