@@ -159,11 +159,14 @@ jobs:
             rm src/sn27lu90.f
 
             python -m numpy.f2py -m snopt -c snopt.pyf src/*.f -L`pwd`/lib -lsnopt7
+            ls -ltr
+            ls -ltr lib/
 
             echo "============================================================="
             echo "Try to import SNOPT"
             echo "============================================================="
-            cd lib
+            # cd lib
+            ls -ltr
             python -c "import snopt"
 
             echo "============================================================="
