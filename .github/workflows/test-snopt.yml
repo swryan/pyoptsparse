@@ -61,13 +61,20 @@ jobs:
             SCIPY: '1.13'
             PYOPTSPARSE: 'conda-forge'
 
-          # test on MacOS/ARM
-          - NAME: MacOS ARM GitHub
-            OS: macos-14
+          - NAME: MacOS GitHub
+            OS: macos-13
             PY: '3.12'
             NUMPY: '1.26'
             SCIPY: '1.13'
             PYOPTSPARSE: 'github'
+
+          # # test on MacOS/ARM
+          # - NAME: MacOS ARM GitHub
+          #   OS: macos-14
+          #   PY: '3.12'
+          #   NUMPY: '1.26'
+          #   SCIPY: '1.13'
+          #   PYOPTSPARSE: 'github'
 
     runs-on: ${{ matrix.OS }}
 
@@ -142,7 +149,10 @@ jobs:
             make
             make check
 
-            echo "  > Building Python bindings for SNOPT..."
+            echo "============================================================="
+            echo "Building Python bindings"
+            echo "============================================================="
+            echo "  > Copying required files from pySNOPT..."
 
             if [[ "${{ matrix.OS }}" == "ubuntu-latest" ]]; then
               PYSNOPT_SOURCE=/home/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
@@ -153,21 +163,20 @@ jobs:
             cp -r $PYSNOPT_SOURCE/* src/
             cp $PYSNOPT_SOURCE/f2py/snopt.pyf .
 
-            echo "removing problematic files..."
+            echo "  > Removing problematic files..."
             rm src/snopth.f
             rm src/sn27lu77.f
             rm src/sn27lu90.f
 
+            echo "  > Building Python bindings..."
             python -m numpy.f2py -m snopt -c snopt.pyf src/*.f -L`pwd`/lib -lsnopt7
+
             ls -ltr
-            ls -ltr lib/
 
             echo "============================================================="
             echo "Try to import SNOPT"
             echo "============================================================="
-            # cd lib
-            ls -ltr
-            python -c "import snopt"
+            python -c "import snopt; print(snopt)"
 
             echo "============================================================="
             echo "Set PYOPTSPARSE_IMPORT_SNOPT_FROM for subsequent steps"
