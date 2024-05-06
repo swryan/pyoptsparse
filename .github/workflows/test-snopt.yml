@@ -161,8 +161,8 @@ jobs:
               PYSNOPT_SOURCE=/Users/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
             fi
 
-            cp $PYSNOPT_SOURCE/* src/
-            cp $PYSNOPT_SOURCE/f2py/snopt.pyf .
+            cp -v $PYSNOPT_SOURCE/*.f src/
+            cp -v $PYSNOPT_SOURCE/f2py/snopt.pyf .
 
             echo "  > Removing problematic files..."
             rm src/snopth.f
