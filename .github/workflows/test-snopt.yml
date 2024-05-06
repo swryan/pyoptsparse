@@ -177,7 +177,7 @@ jobs:
       - name: Display build log
         if: failure()
         run: |
-          for f in $(find /tmp/*/*/meson_logs -name '*.txt'); do
+          for f in $(find /tmp/ -name 'meson-log.txt'); do
             echo "============================================================="
             echo $f
             echo "============================================================="
