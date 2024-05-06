@@ -205,7 +205,7 @@ jobs:
       - name: Install pyOptSparse
         run: |
           echo "============================================================="
-          echo "Install pyoptsparse (from {{ matrix.PYOPTSPARSE }})"
+          echo "Install pyoptsparse (from ${{ matrix.PYOPTSPARSE }})"
           echo "============================================================="
 
           echo "PYOPTSPARSE_IMPORT_SNOPT_FROM: $PYOPTSPARSE_IMPORT_SNOPT_FROM"
