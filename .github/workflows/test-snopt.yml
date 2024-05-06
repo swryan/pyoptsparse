@@ -145,9 +145,9 @@ jobs:
             echo "  > Building Python bindings for SNOPT..."
 
             if [[ "${{ matrix.OS }}" == "ubuntu-latest" ]]; then
-              $PYSNOPT_SOURCE=/home/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
+              PYSNOPT_SOURCE=/home/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
             else
-              $PYSNOPT_SOURCE=/Users/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
+              PYSNOPT_SOURCE=/Users/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
             fi
 
             cp $PYSNOPT_SOURCE/* src/
