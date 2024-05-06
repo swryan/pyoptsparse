@@ -17,6 +17,7 @@ on:
           - 'Ubuntu Conda'
           - 'Ubuntu GitHub'
           - 'MacOS Conda'
+          - 'MacOS GitHub'
           - 'MacOS ARM GitHub'
       debug_enabled:
         type: boolean
