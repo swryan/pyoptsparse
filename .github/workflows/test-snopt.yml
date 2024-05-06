@@ -145,19 +145,20 @@ jobs:
             echo "  > Building Python bindings for SNOPT..."
 
             if [[ "${{ matrix.OS }}" == "ubuntu-latest" ]]; then
-              PYF=/home/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/f2py/snopt.pyf
+              cp /home/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/f2py/snopt.pyf .
             else
-              PYF=/Users/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/f2py/snopt.pyf
+              cp /Users/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/f2py/snopt.pyf .
             fi
 
-            echo "removing problematic snopth.f..."
+            echo "removing problematic file 'snopth.f'..."
             rm src/snopth.f
 
-            python -m numpy.f2py -m snopt -c ${PYF} src/*.f -Llib -lsnopt7
+            python -m numpy.f2py -m snopt -c snopt.pyf src/*.f -L`pwd`/lib -lsnopt7
 
             echo "============================================================="
             echo "Try to import SNOPT"
             echo "============================================================="
+            cd lib
             python -c "import snopt"
 
             echo "============================================================="
