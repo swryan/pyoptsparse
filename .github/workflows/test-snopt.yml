@@ -104,7 +104,7 @@ jobs:
       - name: Install dependencies
         run: |
           conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
-          conda install cython swig compilers openmpi-mpicc cmake meson -q -y
+          conda install cython swig compilers cmake meson -q -y
           pip install testflo parameterized
 
       - name: Checkout code
@@ -139,7 +139,8 @@ jobs:
             echo "  > Building SNOPT..."
             cd SNOPT
             ./configure
-            make snopt
+            make
+            make check
 
             echo "  > Building Python bindings for SNOPT..."
             cd lib
@@ -152,14 +153,18 @@ jobs:
 
             python -m numpy.f2py -c -m snopt snopt.pyf
 
+            cd ../..
+
+            echo "============================================================="
+            echo "Try to import SNOPT"
+            echo "============================================================="
             python -c "import snopt"
 
+            echo "============================================================="
+            echo "Set PYOPTSPARSE_IMPORT_SNOPT_FROM for subsequent steps"
+            echo "============================================================="
             PYOPTSPARSE_IMPORT_SNOPT_FROM=`pwd`
-
-            echo "  > Pass PYOPTSPARSE_IMPORT_SNOPT_FROM to subsequent steps..."
             echo "PYOPTSPARSE_IMPORT_SNOPT_FROM=$PYOPTSPARSE_IMPORT_SNOPT_FROM" >> $GITHUB_ENV
-
-            cd ../..
           else
             echo "============================================================="
             echo "SNOPT source is not available."
