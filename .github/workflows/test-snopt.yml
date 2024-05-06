@@ -182,7 +182,7 @@ jobs:
             echo "============================================================="
             echo "Set PYOPTSPARSE_IMPORT_SNOPT_FROM for subsequent steps"
             echo "============================================================="
-            PYOPTSPARSE_IMPORT_SNOPT_FROM=`pwd`
+            export PYOPTSPARSE_IMPORT_SNOPT_FROM=`pwd`
             echo "PYOPTSPARSE_IMPORT_SNOPT_FROM=$PYOPTSPARSE_IMPORT_SNOPT_FROM" >> $GITHUB_ENV
 
             cd ../..
@@ -209,7 +209,6 @@ jobs:
           echo "============================================================="
 
           echo "PYOPTSPARSE_IMPORT_SNOPT_FROM: $PYOPTSPARSE_IMPORT_SNOPT_FROM"
-          ls -ltr $PYOPTSPARSE_IMPORT_SNOPT_FROM
 
           if [[ "${{ matrix.PYOPTSPARSE }}" == "conda-forge" ]]; then
             conda install pyoptsparse
