@@ -150,6 +150,9 @@ jobs:
               PYF=/Users/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/f2py/snopt.pyf
             fi
 
+            echo "removing problematic snopth.f..."
+            rm src/snopth.f
+
             python -m numpy.f2py -m snopt -c ${PYF} src/*.f -Llib -lsnopt7
 
             echo "============================================================="
