@@ -153,8 +153,10 @@ jobs:
             cp -r $PYSNOPT_SOURCE/* src/
             cp $PYSNOPT_SOURCE/f2py/snopt.pyf .
 
-            # echo "removing problematic file 'snopth.f'..."
-            # rm src/snopth.f
+            echo "removing problematic files..."
+            rm src/snopth.f
+            rm src/sn27lu77.f
+            rm src/sn27lu90.f
 
             python -m numpy.f2py -m snopt -c snopt.pyf src/*.f -L`pwd`/lib -lsnopt7
 
