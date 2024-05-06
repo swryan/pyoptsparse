@@ -153,8 +153,6 @@ jobs:
 
             python -m numpy.f2py -c -m snopt snopt.pyf
 
-            cd ../..
-
             echo "============================================================="
             echo "Try to import SNOPT"
             echo "============================================================="
@@ -165,6 +163,8 @@ jobs:
             echo "============================================================="
             PYOPTSPARSE_IMPORT_SNOPT_FROM=`pwd`
             echo "PYOPTSPARSE_IMPORT_SNOPT_FROM=$PYOPTSPARSE_IMPORT_SNOPT_FROM" >> $GITHUB_ENV
+
+            cd ../..
           else
             echo "============================================================="
             echo "SNOPT source is not available."
