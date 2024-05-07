@@ -113,6 +113,7 @@ jobs:
         run: |
           conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
           conda install cython swig compilers cmake meson -q -y
+          conda install mpi4py openmpi-mpicc -q -y
           pip install testflo parameterized
 
       - name: Checkout code
@@ -172,8 +173,6 @@ jobs:
             echo "  > Building Python bindings..."
             python -m numpy.f2py -m snopt -c snopt.pyf src/*.f -L`pwd`/lib -lsnopt7
 
-            ls -ltr
-
             echo "============================================================="
             echo "Try to import SNOPT"
             echo "============================================================="
@@ -223,7 +222,6 @@ jobs:
           echo "============================================================="
 
           echo "PYOPTSPARSE_IMPORT_SNOPT_FROM: $PYOPTSPARSE_IMPORT_SNOPT_FROM"
-          ls -ltr $PYOPTSPARSE_IMPORT_SNOPT_FROM
 
           cd tests
           testflo -v --show_skipped
