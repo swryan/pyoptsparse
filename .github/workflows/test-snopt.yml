@@ -110,10 +110,18 @@ jobs:
           channels: conda-forge
 
       - name: Install dependencies
+        if: matrix.OS != 'macos-14'
         run: |
           conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
           conda install cython swig compilers cmake meson -q -y
           conda install mpi4py openmpi-mpicc -q -y
+          pip install testflo parameterized
+
+      - name: Install dependencies MacOS 14
+        if: matrix.OS == 'macos-14'
+        run: |
+          conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
+          brew install cython swig gcc cmake meson open-mpi mpi4py
           pip install testflo parameterized
 
       - name: Checkout code
