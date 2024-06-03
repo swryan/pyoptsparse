@@ -70,6 +70,13 @@ jobs:
             PYOPTSPARSE: 'github'
 
           # test on MacOS/ARM
+          - NAME: MacOS ARM Conda
+            OS: macos-14
+            PY: '3.12'
+            NUMPY: '1.26'
+            SCIPY: '1.13'
+            PYOPTSPARSE: 'conda'
+
           - NAME: MacOS ARM GitHub
             OS: macos-14
             PY: '3.12'
