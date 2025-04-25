@@ -68,6 +68,12 @@ If you plan to modify pyOptSparse, installing with the developer option, i.e. wi
   Some optimizers are proprietary, and their sources are not distributed with pyOptSparse.
   To use them, please follow the instructions on specific optimizer pages.
 
+To see the list of installed optimizers, use the following:
+
+.. prompt:: bash
+
+  python -c "import pyoptsparse; print(pyoptsparse.list_optimizers())"
+
 Specifying compilers
 ~~~~~~~~~~~~~~~~~~~~
 To specify a non-default compiler (e.g. something other than ``/usr/bin/gcc``), meson recognizes certain `special environment variables <https://mesonbuild.com/Reference-tables.html#compiler-and-linker-selection-variables>`__.
@@ -184,19 +190,6 @@ An ``environment.yml`` file is provided in the ``pyoptsparse`` repo:
     conda config --env --set channel_priority strict
 
     conda env update -f .github\environment.yml
-    conda install libpgmath
-
-Next, we need to tell the compiler where to find IPOPT:
-
-.. tabs::
-
-  .. code-tab:: bash Linux/OSX
-
-    export IPOPT_DIR="$CONDA_PREFIX"
-
-  .. code-tab:: powershell Windows
-
-    set IPOPT_DIR=%CONDA_PREFIX%\Library
 
 Finally, build the wheel and install it using pip:
 

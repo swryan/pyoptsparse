@@ -2,21 +2,22 @@
 pySNOPT - A variation of the pySNOPT wrapper specifically designed to
 work with sparse optimization problems.
 """
+
 # Standard Python modules
 import datetime
 import os
 import re
+import sys
 import time
 from typing import Any, Dict, Optional, Tuple
 
 # External modules
-from baseclasses.utils import CaseInsensitiveSet
+from baseclasses.utils import CaseInsensitiveSet, writePickle
 import numpy as np
 from numpy import ndarray
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 # Local modules
-from ..pyOpt_error import Error
 from ..pyOpt_optimization import Optimization
 from ..pyOpt_optimizer import Optimizer
 from ..pyOpt_utils import (
@@ -58,7 +59,9 @@ class SNOPT(Optimizer):
             {
                 "Save major iteration variables",
                 "Return work arrays",
+                "Work arrays save file",
                 "snSTOP function handle",
+                "snSTOP arguments",
             }
         )
 
@@ -116,7 +119,9 @@ class SNOPT(Optimizer):
             "Total real workspace": [int, None],
             "Save major iteration variables": [list, []],
             "Return work arrays": [bool, False],
+            "Work arrays save file": [(type(None), str), None],
             "snSTOP function handle": [(type(None), type(lambda: None)), None],
+            "snSTOP arguments": [list, []],
         }
         return defOpts
 
@@ -259,6 +264,9 @@ class SNOPT(Optimizer):
         self.startTime = time.time()
         self.callCounter = 0
         self.storeSens = storeSens
+        # flush the output streams
+        sys.stdout.flush()
+        sys.stderr.flush()
 
         # Store the starting time if the keyword timeLimit is given:
         self.timeLimit = timeLimit
@@ -300,7 +308,7 @@ class SNOPT(Optimizer):
 
         # Make sure restartDict is provided if using hot start
         if self.getOption("Start") == "Hot" and restartDict is None:
-            raise Error("restartDict must be provided if using a hot start")
+            raise ValueError("restartDict must be provided if using a hot start")
         # If user requested the work arrays, then we need to set sticky parameter
         # to make sure that the work arrays are re-usable at the next hot start
         if self.getOption("Return work arrays"):
@@ -351,14 +359,14 @@ class SNOPT(Optimizer):
             if iPrint != 0 and iPrint != 6:
                 ierror = snopt.openunit(iPrint, PrintFile, "replace", "sequential")
                 if ierror != 0:
-                    raise Error(f"Failed to properly open {PrintFile}, ierror = {ierror:3}")
+                    raise ValueError(f"Failed to properly open {PrintFile}, ierror = {ierror:3}")
 
             iSumm = self.getOption("iSumm")
             SummFile = os.path.join(self.getOption("Summary file"))
             if iSumm != 0 and iSumm != 6:
                 ierror = snopt.openunit(iSumm, SummFile, "replace", "sequential")
                 if ierror != 0:
-                    raise Error(f"Failed to properly open {SummFile}, ierror = {ierror:3}")
+                    raise ValueError(f"Failed to properly open {SummFile}, ierror = {ierror:3}")
 
             # Calculate the length of the work arrays
             # ---------------------------------------
@@ -513,6 +521,8 @@ class SNOPT(Optimizer):
                 "pi": pi,
             }
 
+            self._on_flushFiles()
+
         else:  # We are not on the root process so go into waiting loop:
             self._waitLoop()
             restartDict = None
@@ -559,10 +569,7 @@ class SNOPT(Optimizer):
         elif fail == 2:
             mode = -2
 
-        # Flush the files to the buffer for all the people who like to
-        # monitor the residual
-        snopt.pyflush(self.getOption("iPrint"))
-        snopt.pyflush(self.getOption("iSumm"))
+        self._on_flushFiles()
 
         # Check if we've exceeded the timeLimit
         if self.timeLimit is not None:
@@ -645,9 +652,9 @@ class SNOPT(Optimizer):
             elif saveVar == "maxVi":
                 iterDict[saveVar] = maxvi
             else:
-                raise Error(f"Received unknown SNOPT save variable {saveVar}. "
-                            + "Please see 'Save major iteration variables' option in the pyOptSparse documentation "
-                            + "under 'SNOPT'.")
+                raise ValueError(f"Received unknown SNOPT save variable {saveVar}. "
+                                 + "Please see 'Save major iteration variables' option in the pyOptSparse "
+                                 + "documentation under 'SNOPT'.")
         if self.storeHistory:
             currX = x[:n]  # only the first n component is x, the rest are the slacks
             if nmajor == 0:
@@ -663,12 +670,39 @@ class SNOPT(Optimizer):
                 if "funcs" in self.cache.keys():
                     iterDict["funcs"].update(self.cache["funcs"])
 
+        # Create the restart dictionary to be passed to snstop_handle
+        restartDict = {
+            "cw": cw,
+            "iw": iw,
+            "rw": rw,
+            "xs": x,  # x is the same as xs; we call it x here to be consistent with the SNOPT subroutine snSTOP
+            "hs": hs,
+            "pi": pi,
+        }
+
+        workArraysSave = self.getOption("Work arrays save file")
+        if workArraysSave is not None:
+            # Save the restart dictionary
+            writePickle(workArraysSave, restartDict)
+
         # perform callback if requested
         snstop_handle = self.getOption("snSTOP function handle")
         if snstop_handle is not None:
+
+            # Get the arguments to pass in to snstop_handle
+            # iterDict is always included
+            snstopArgs = [iterDict]
+            for snstopArg in self.getOption("snSTOP arguments"):
+                if snstopArg == "restartDict":
+                    snstopArgs.append(restartDict)
+                else:
+                    raise ValueError(f"Received unknown snSTOP argument {snstopArg}. "
+                                     + "Please see 'snSTOP arguments' option in the pyOptSparse documentation "
+                                     + "under 'SNOPT'.")
+
             if not self.storeHistory:
-                raise Error("snSTOP function handle must be used with storeHistory=True")
-            iabort = snstop_handle(iterDict)
+                raise ValueError("snSTOP function handle must be used with storeHistory=True")
+            iabort = snstop_handle(*snstopArgs)
             # write iterDict again if anything was inserted
             if self.storeHistory and callCounter is not None:
                 self.hist.write(callCounter, iterDict)
