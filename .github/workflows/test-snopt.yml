@@ -194,7 +194,7 @@ jobs:
             ldconfig -p
             echo $LD_LIBRARY_PATH
             echo $DYLD_LIBRARY_PATH
-            LD_LIBRARY_PATH=$CONDA_PREFIX python -c "import snopt; print(snopt)"
+            LD_LIBRARY_PATH=/lib/x86_64-linux-gnu/ python -c "import snopt; print(snopt)"
             python -c "import snopt; print(snopt)"
 
             echo "============================================================="
