@@ -191,7 +191,7 @@ jobs:
             echo "============================================================="
             echo "Try to import SNOPT"
             echo "============================================================="
-            locate libgomp.so
+            ldconfig -p
             echo $LD_LIBRARY_PATH
             echo $DYLD_LIBRARY_PATH
             LD_LIBRARY_PATH=$CONDA_PREFIX python -c "import snopt; print(snopt)"
