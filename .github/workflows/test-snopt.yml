@@ -186,7 +186,7 @@ jobs:
             rm src/sn27lu90.f
 
             echo "  > Building Python bindings..."
-            python -m numpy.f2py -m snopt -c snopt.pyf src/*.f -L`pwd`/lib -lsnopt7
+            python -m numpy.f2py -m snopt -c snopt.pyf src/*.f -L`pwd`/lib -L/lib -lsnopt7
 
             echo "============================================================="
             echo "Try to import SNOPT"
