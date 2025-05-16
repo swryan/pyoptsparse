@@ -170,7 +170,7 @@ jobs:
             echo "============================================================="
             echo "  > Copying required files from pySNOPT..."
 
-            PYSNOPT_SOURCE=$HOME/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
+            PYSNOPT_SOURCE=$HOME/pyoptsparse/pyoptsparse/pySNOPT/source/
             cp -v $PYSNOPT_SOURCE/*.f src/
             cp -v $PYSNOPT_SOURCE/f2py/snopt.pyf .
 
