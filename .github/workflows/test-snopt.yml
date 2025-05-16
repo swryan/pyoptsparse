@@ -128,7 +128,7 @@ jobs:
         if: matrix.OS == 'macos-14'
         run: |
           conda install numpy=${{ matrix.NUMPY }} scipy=${{ matrix.SCIPY }} -q -y
-          brew install cython swig gcc cmake meson openmp open-mpi mpi4py
+          brew install cython swig gcc cmake meson open-mpi mpi4py
           pip install testflo parameterized
 
       - name: Checkout code
@@ -152,7 +152,6 @@ jobs:
       - name: Build SNOPT
         run: |
           if [[ "${{ secrets.SNOPT_LOCATION }}" ]]; then
-            scp -qr ${{ secrets.SNOPT_LOCATION }} .
             echo "============================================================="
             echo "Building SNOPT"
             echo "============================================================="
@@ -171,12 +170,7 @@ jobs:
             echo "============================================================="
             echo "  > Copying required files from pySNOPT..."
 
-            if [[ "${{ matrix.OS }}" == "ubuntu-latest" ]]; then
-              PYSNOPT_SOURCE=/home/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
-            else
-              PYSNOPT_SOURCE=/Users/runner/work/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
-            fi
-
+            PYSNOPT_SOURCE=$HOME/pyoptsparse/pyoptsparse/pyoptsparse/pySNOPT/source/
             cp -v $PYSNOPT_SOURCE/*.f src/
             cp -v $PYSNOPT_SOURCE/f2py/snopt.pyf .
 
@@ -191,13 +185,6 @@ jobs:
             echo "============================================================="
             echo "Try to import SNOPT"
             echo "============================================================="
-            echo "------------------------------------------"
-            echo "ldconfig -p:"
-            ldconfig -p
-            echo "------------------------------------------"
-            echo "LD_LIBRARY_PATH:" $LD_LIBRARY_PATH
-            echo "DYLD_LIBRARY_PATH:" $DYLD_LIBRARY_PATH
-            echo "------------------------------------------"
             LD_LIBRARY_PATH=/lib/x86_64-linux-gnu/ python -c "import snopt; print(snopt)"
             python -c "import snopt; print(snopt)"
 
@@ -243,6 +230,7 @@ jobs:
           echo "============================================================="
           echo "Run pyoptsparse tests"
           echo "============================================================="
+          export OMPI_MCA_mca_base_component_show_load_errors=0
 
           echo "PYOPTSPARSE_IMPORT_SNOPT_FROM: $PYOPTSPARSE_IMPORT_SNOPT_FROM"
 
