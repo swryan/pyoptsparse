@@ -235,4 +235,4 @@ jobs:
           echo "PYOPTSPARSE_IMPORT_SNOPT_FROM: $PYOPTSPARSE_IMPORT_SNOPT_FROM"
 
           cd tests
-          testflo -v --show_skipped
+          testflo -v --pre_announce --show_skipped
